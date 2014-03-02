@@ -7,6 +7,7 @@
         .axis line { stroke: black; }
         circle {
             fill: #000066;
+			stroke: black;
         }
         input[type=range] {
 
@@ -26,6 +27,7 @@
             height: 70px;
             position: relative;
         }
+		
     </style>
 </head>
 
@@ -57,7 +59,11 @@
         .append("svg")
         .attr("height", 1000)
         .attr("width", 1000);
-
+    
+    var svg4 = d3.select("#canvas")
+        .append("svg")
+        .attr("height", 1000)
+        .attr("width", 1000);
    
     //Generate axes.
     var xAxis = d3.svg.axis().scale(xAxScale).tickFormat(d3.format("d"));
@@ -65,11 +71,9 @@
 
     var yAxis = d3.svg.axis().scale(yAxScale).orient("left").ticks(5);
     
-    var avgReviews = {};
 
-    var file = "wii.json";
+    var file = "data.json";
     //Checks if asynchronous call to json data is finished.
-    var isFinished = false;
 
 
     //concatenates month and year together to form a string of the first day of that month for that year
@@ -80,43 +84,14 @@
         return temp;
         }
 
-    var keys = new Array();
-    var keyCount = 0;
-
-    d3.json(file, function (data){
-        var sum = 0.0;
-        var num = 0;
-        var date = "";
-        var temp;
-        json = data;
-        for(var i = 0; i < json.reviews.length; i++){
-        var review = json.reviews[i];
-        date = parseDate(review.month, review.year);
-        if(!avgReviews[date]){
-        avgReviews[date] = {"date" : date, "avg": review.rating, "num": 1};
-        keys[keyCount++] = date;
-        }
-        else{
-        temp = avgReviews[date];
-        temp.avg += review.rating;
-        temp.num++;
-        }
-        }
-        for(var i = 0; i < keyCount; i++){
-        var key = keys[i];
-        var temp = avgReviews[key];
-        var avg = (temp.avg / temp.num);
-        avgReviews[key].avg = avg;
-        }
-        isFinished = true;
-    });
-
-
-
     //Path data used to calculate the line path through the circles
     var pathArrData1 = [];
     var pathArrData2 = [];
     var pathArrData3 = [];
+
+    //Path data lines for the combined fourth graph.
+    var pathArrData4 = [];
+    var pathArrData5 = [];
 
     //Appends the axes to all the graph.
     svg.append("g")
@@ -151,61 +126,52 @@
         .attr("transform", "translate(100, 0)")
         .call(yAxis);
 
-    //Generate lables and title.
-    generateLabels(svg, "XBox One");
-    generateLabels(svg2, "WiiU");
-    generateLabels(svg3, "PS4");
 
+    svg4.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0, 900)")
+        .call(xAxis);
 
-    //Add filter slider for filtering out circles by helpfulness percentage
-    var sliderDiv = d3.select("#canvas")
-        .append("div")
-        .attr("id", "sliderDiv");
+    svg4.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(100, 0)")
+        .call(yAxis);
 
-    sliderDiv
-        .append("label")
-        .attr("for", "slider")
-        .html('<span class = "min">0%</span><span class = "max">100%</span>');
+    //Generate labels and title.
+    generateLabels(svg, "Wii U");
+    generateLabels(svg2, "Xbox One");
+    generateLabels(svg3, "Playstation 4");
+    generateLabels(svg4, "Consoles Combined");
 
-    var slider = sliderDiv
-        .append("input")
-        .attr("type", "range")
-        .attr("min", "0")
-        .attr("max", "100")
-        .attr("value", "0")
-        .attr("id", "slider");
         
 
     //Scales to be used for circle locations and information, scaleName corresponds to what scale in the visualization
     //it will be used for.
-    var dateScale = d3.scale.linear().domain([Date.parse("September 1, 2012"), Date.parse("March 31, 2014")]).range([100, 900]);
+    var dateScale = d3.scale.linear().domain([Date.parse("August 1, 2012"), Date.parse("March 31, 2014")]).range([100, 900]);
     var starScale = d3.scale.linear().domain([1, 5]).range([850, 50]);
-    var numReviewScale = d3.scale.linear().domain([0, 100]).range([10, 25]);
-    var dateScale2 = d3.scale.linear().domain([Date.parse("September 1, 2013"), Date.parse("March 31, 2014")]).range([100, 900]);
+    var numReviewScale = d3.scale.linear().domain([0, 4000]).range([10, 40]);
+    var dateScale2 = d3.scale.linear().domain([Date.parse("August 1, 2013"), Date.parse("March 31, 2014")]).range([100, 900]);
    // var helpfulScale = d3.scale.linear().domain([0, 1]).range([25, 100]);
 
 
 
-    while(!isFinished) {
     
-    }
-    createCircles(dateScale, svg2, pathArrData2);
-
-    //Calls function to draw line through all circles. 
-    appendLine(svg2, pathArrData2); 
+   
 
     //Generates the circles average review data
-    function createCircles(dScale, svgEl, pathArrData) {
-        for(i = 0; i < keyCount; i++) {
-            var key = keys[i];
-            var obj = avgReviews[key];
-            appendNewCircle(obj.date, obj.avg, obj.num, dScale, svgEl, pathArrData );
+    function createCircles(dScale, svgEl, pathArrData, reviewData, consoleNum) {
+        for(i = 0; i < reviewData.length; i++) {
+            var obj = reviewData[i];
+            appendNewCircle(obj.date, obj.avg, obj.num, dScale, svgEl, pathArrData, consoleNum);
+
+
+
         }
 
     }
 
     //Function called everytime we append a new circle by parsing our data.
-    function appendNewCircle(date, star, numberReviews, dScale, svgEl, pathArrData) {
+    function appendNewCircle(date, star, numberReviews, dScale, svgEl, pathArrData, consoleNum) {
         //The calculated color of the circle based on its average star rating field.
         var color = colorScale(star);
         //Appends new circle to graph.
@@ -217,22 +183,19 @@
             .style("fill", color);
 
         pathArrData.push({"x": dScale(Date.parse(date)), "y": starScale(star)});
+        //Following code helps build the lines for the combined fourth graph.
+        if(consoleNum == 1) {
+            pathArrData4.push({"x": dateScale(Date.parse(date)), "y": starScale(star)});
+        }  
+        else if (consoleNum == 2) {
+            pathArrData5.push({"x": dateScale(Date.parse(date)), "y": starScale(star)});
 
+        }
 
-        //Deals with how clicking on a circle will display its written review.
-        /*circle.on("click", function() {
-            var width = screen.availWidth/2;
-            var height = screen.availHeight/2;
-            var written = ("<h1 class = reviewHeader>Review</h1><p>" + review + "</p>");
-            var style = ("<style> html {background-color: #0099CC} .reviewHeader {text-align: center} </style>");
-            var newWindow = window.open("","", "width=" + width, "height=" + height); newWindow.document.write("<html><head>" + style + "</head><body>" + written + "</body>");
-
-
-            }); */
     }
 
     //Following code appends a path to the svg that traverses through all the circles.
-    function appendLine(svgEl, pathArrData, color) {
+    function appendLine(svgEl, pathArrData, color ) {
         
         //Sorts the path data array so the path line is drawn correctly.
         pathArrData.sort(function(a, b) {
@@ -253,15 +216,10 @@
                        .y(function(d) {return d.y;});
         var linePath = svgEl.append("path")
                             .attr("d", line(pathArrData))
-                            .attr("stroke", "black")
+                            .attr("stroke", color)
                             .attr("stroke-width", 1)
                             .attr("fill", "none");
 
-        svg4.append("path")
-            .attr("d", line(pathArrData))
-            .attr("stroke", )
-            .attr("stroke-width", 1)
-            .attr("fill", "none");
     }
 
 
@@ -307,9 +265,32 @@
             .attr("text-anchor", "middle")
             .attr("font-size", "12px")
             .attr("font-weight", "bold")
-            .attr("transform",  "rotate(-90, " + xAxScale(2012.68) + "," + yAxScale(3) + ")") 
+            .attr("transform", "translate(100, 200)")
+            .attr("transform", "rotate(-90, " + xAxScale(2012.68) + "," + yAxScale(3) + ")") 
             .text("Average star rating");
     }
+	
+	
+	d3.json(file, function (data){
+		var wii = data.wii;
+		var ps4 = data.ps4;
+		var xbox = data.xbox;
+		
+		
+	   //creates circles for xbox, wii, and ps4
+		createCircles(dateScale, svg, pathArrData2, wii, 0);
+		createCircles(dateScale2, svg2, pathArrData1, xbox, 1);
+		createCircles(dateScale2, svg3, pathArrData3, ps4, 2);
+		
+		//Calls function to draw line through all circles. 
+		appendLine(svg, pathArrData2, "black"); 
+		appendLine(svg2, pathArrData1, "black"); 
+		appendLine(svg3, pathArrData3, "black"); 
+
+		appendLine(svg4, pathArrData2, "black"); 
+		appendLine(svg4, pathArrData4, "green"); 
+		appendLine(svg4, pathArrData5, "blue"); 
+    });
 </script>
 
     
