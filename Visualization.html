@@ -114,7 +114,9 @@
 
 
     //Path data used to calculate the line path through the circles
-    var pathArrData = [];
+    var pathArrData1 = [];
+    var pathArrData2 = [];
+    var pathArrData3 = [];
 
     //Appends the axes to all the graph.
     svg.append("g")
@@ -150,9 +152,9 @@
         .call(yAxis);
 
     //Generate lables and title.
-    generateLabels(svg);
-    generateLabels(svg2);
-    generateLabels(svg3);
+    generateLabels(svg, "XBox One");
+    generateLabels(svg2, "WiiU");
+    generateLabels(svg3, "PS4");
 
 
     //Add filter slider for filtering out circles by helpfulness percentage
@@ -173,8 +175,6 @@
         .attr("value", "0")
         .attr("id", "slider");
         
-    //Generates the interactivity for the slider
-    //sliderHelpful(slider);
 
     //Scales to be used for circle locations and information, scaleName corresponds to what scale in the visualization
     //it will be used for.
@@ -189,27 +189,27 @@
     while(!isFinished) {
     
     }
-    createCircles(dateScale);
+    createCircles(dateScale, svg2, pathArrData2);
 
     //Calls function to draw line through all circles. 
-    appendLine(); 
+    appendLine(svg2, pathArrData2); 
 
     //Generates the circles average review data
-    function createCircles(dScale) {
+    function createCircles(dScale, svgEl, pathArrData) {
         for(i = 0; i < keyCount; i++) {
             var key = keys[i];
             var obj = avgReviews[key];
-            appendNewCircle(obj.date, obj.avg, obj.num, dScale );
+            appendNewCircle(obj.date, obj.avg, obj.num, dScale, svgEl, pathArrData );
         }
 
     }
 
     //Function called everytime we append a new circle by parsing our data.
-    function appendNewCircle(date, star, numberReviews, dScale) {
+    function appendNewCircle(date, star, numberReviews, dScale, svgEl, pathArrData) {
         //The calculated color of the circle based on its average star rating field.
         var color = colorScale(star);
         //Appends new circle to graph.
-        var circle = svg.append("circle")
+        var circle = svgEl.append("circle")
             .attr("cx", dScale(Date.parse(date)))
             .attr("cy", starScale(star))
             .attr("r", numReviewScale(numberReviews))
@@ -232,7 +232,7 @@
     }
 
     //Following code appends a path to the svg that traverses through all the circles.
-    function appendLine() {
+    function appendLine(svgEl, pathArrData) {
         
         //Sorts the path data array so the path line is drawn correctly.
         pathArrData.sort(function(a, b) {
@@ -251,7 +251,7 @@
         var line = d3.svg.line()
                        .x(function(d) {return d.x;})
                        .y(function(d) {return d.y;});
-        var linePath = svg.append("path")
+        var linePath = svgEl.append("path")
                             .attr("d", line(pathArrData))
                             .attr("stroke", "black")
                             .attr("stroke-width", 1)
@@ -279,14 +279,14 @@
 	};
 
     //Function generates labels and titles for graph
-    function generateLabels(svgEl) {
+    function generateLabels(svgEl, console) {
         svgEl.append("text")
             .attr("x", xAxScale(2013.5))
             .attr("y", yAxScale(5.05))
             .attr("text-anchor", "middle")
             .attr("font-size", "16px")
             .attr("text-decoration", "underline")
-            .text("Amazon Console Reviews Over Time");
+            .text("Amazon " + console + " Reviews Over Time");
 
         svgEl.append("text")
             .attr("x", xAxScale(2013.5))
@@ -302,33 +302,11 @@
             .attr("text-anchor", "middle")
             .attr("font-size", "12px")
             .attr("font-weight", "bold")
-            .attr("transform", "rotate(-90, " + xAxScale(2012.5) + ", " + yAxScale(3))
+            .attr("transform", "translate(100, 200)")
+            .attr("transform", function(d) {
+                return "rotate(-90)" 
+                })
             .text("Average star rating");
-    }
-
-    //Generates the interactivity for the slider. All circles with less than the slider value of helpfulness
-    //percentage will be hidden.
-    function sliderHelpful(slider) {
-        slider.on("change", function() {
-            //Value of the slider
-            var slideVal = this.value / 100;
-            d3.selectAll("circle")
-                .each(function(d, i) {
-
-                if(d < slideVal) {
-                    d3.select(this)
-                        .style("visibility", "hidden");
-                }
-                else {
-                    d3.select(this)
-                        .style("visibility", "visible");
-                }
-                });
-        });
-    
-
-
-
     }
 </script>
 
