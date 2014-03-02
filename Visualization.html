@@ -216,7 +216,7 @@
             //.style("fill-opacity", helpful);
             .style("fill", color);
 
-        pathArrData.push({"x": dateScale(Date.parse(date)), "y": starScale(star)});
+        pathArrData.push({"x": dScale(Date.parse(date)), "y": starScale(star)});
 
 
         //Deals with how clicking on a circle will display its written review.
@@ -232,7 +232,7 @@
     }
 
     //Following code appends a path to the svg that traverses through all the circles.
-    function appendLine(svgEl, pathArrData) {
+    function appendLine(svgEl, pathArrData, color) {
         
         //Sorts the path data array so the path line is drawn correctly.
         pathArrData.sort(function(a, b) {
@@ -257,6 +257,11 @@
                             .attr("stroke-width", 1)
                             .attr("fill", "none");
 
+        svg4.append("path")
+            .attr("d", line(pathArrData))
+            .attr("stroke", )
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
     }
 
 
@@ -297,15 +302,12 @@
             .text("Date");
 
         svgEl.append("text")
-            .attr("x", xAxScale(2012.5))
+            .attr("x", xAxScale(2012.68))
             .attr("y", yAxScale(3))
             .attr("text-anchor", "middle")
             .attr("font-size", "12px")
             .attr("font-weight", "bold")
-            .attr("transform", "translate(100, 200)")
-            .attr("transform", function(d) {
-                return "rotate(-90)" 
-                })
+            .attr("transform",  "rotate(-90, " + xAxScale(2012.68) + "," + yAxScale(3) + ")") 
             .text("Average star rating");
     }
 </script>
